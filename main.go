@@ -12,10 +12,17 @@ import (
 )
 
 func main() {
-	var loggerFlag bool
-	var logger *log.Logger
+	var (
+		loggerFlag bool
+		fcgiport   string
+		address    string
+		logger     *log.Logger
+	)
 
 	flag.BoolVar(&loggerFlag, "log", false, "enable stdout logger")
+	flag.StringVar(&fcgiport, "fcgiport", "9001", "change fcgi port")
+	flag.StringVar(&address, "ts3addr", "localhost",
+		"change the ts3 server query 'address:port'")
 
 	flag.Parse()
 
@@ -23,7 +30,7 @@ func main() {
 		logger = ts3sqlib.StdoutLogger
 	}
 
-	ts3, err := server.New("localhost", "testlogin", "bwu7tzVh", 1, logger, 5)
+	ts3, err := server.New(address, "testlogin", "bwu7tzVh", 1, logger, 5)
 	if err != nil {
 		//fmt.Fprintln(os.Stderr, err)
 		log.Fatal(err)
@@ -31,7 +38,7 @@ func main() {
 	}
 	defer ts3.Quit()
 
-	listener, err := net.Listen("tcp", "127.0.0.1:9001")
+	listener, err := net.Listen("tcp", "127.0.0.1:"+fcgiport)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
