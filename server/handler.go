@@ -15,16 +15,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		clients := s.clientlist
 		s.clmutex.Unlock()
 
-		for i := range clients {
-			nick, ok := clients[i]["client_nickname"]
-			if ok {
-				if strings.Contains(clients[i]["client_type"], "0") {
-					fmt.Fprintln(w, "<p>", nick, "</p>")
-				}
-			} else {
-				fmt.Fprintln(w, "error: ", clients[i], ", empty map")
-				if s.logger != nil {
-					s.logger.Print("error: " + fmt.Sprint(clients[i]))
+		if len(clients) > 0 {
+			fmt.Fprintln(w, "<p>No one is online right now.</p>")
+		} else {
+			for i := range clients {
+				nick, ok := clients[i]["client_nickname"]
+				if ok {
+					if strings.Contains(clients[i]["client_type"], "0") {
+						fmt.Fprintln(w, "<p>", nick, "</p>")
+					}
+				} else {
+					fmt.Fprintln(w, "error: ", clients[i], ", empty map")
+					if s.logger != nil {
+						s.logger.Print("error: " + fmt.Sprint(clients[i]))
+					}
 				}
 			}
 		}
