@@ -29,6 +29,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					s.logger.Print("error: " + fmt.Sprint(client))
 				}
 			}
+			i++
 		}
 		if i == 0 {
 			fmt.Fprintln(w, "<h1>No one is online right now.</h1>")
