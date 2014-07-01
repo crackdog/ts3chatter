@@ -25,13 +25,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprint(w, htmlHeader)
 		if n > 0 {
-			fmt.Fprint(w, "<h6>", n, " Clients are online:</h6>\r\n")
+			fmt.Fprintln(w, "<h2>", n, " Clients are online:</h2><ol>")
 
 			for _, client := range clients {
 				nick, ok := client["client_nickname"]
 				if ok {
 					if strings.Contains(client["client_type"], "0") {
-						fmt.Fprintln(w, "<p>", nick, "</p>")
+						fmt.Fprintln(w, "<li>", nick, "</li>")
 					}
 				} else {
 					fmt.Fprintln(w, "error: ", client, ", empty map")
@@ -41,6 +41,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 				i++
 			}
+			fmt.Fprintln(w, "</ol>")
 		} else {
 			fmt.Fprintln(w, "<h1>No one is online right now.</h1>")
 		}
