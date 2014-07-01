@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"github.com/crackdog/ts3sqlib"
 	"log"
+	"strings"
 	"sync"
 	"time"
 )
 
 type Server struct {
 	ts3conn       *ts3sqlib.SqConn
-	clientlist    []map[string]string
+	clientlist    *clients
 	loginname     string
 	password      string
 	virtualserver int
@@ -22,6 +23,11 @@ type Server struct {
 	closed        bool
 }
 
+type clients struct {
+	cl []map[string]string
+	n  int
+}
+
 func New(address, login, password string, virtualserver int,
 	logger *log.Logger, sleepseconds int) (s *Server, err error) {
 
@@ -30,7 +36,9 @@ func New(address, login, password string, virtualserver int,
 	s.password = password
 	s.virtualserver = virtualserver
 	s.logger = logger
-	s.clientlist = make([]map[string]string, 0)
+	s.clientlist = new(clients)
+	s.clientlist.cl = make([]map[string]string, 0)
+	s.clientlist.n = 0
 	s.handlermutex = new(sync.Mutex)
 	s.clmutex = new(sync.Mutex)
 
@@ -84,8 +92,8 @@ func (s *Server) log(v ...interface{}) {
 //clientlistReceiver receives a Clientlist every
 func (s *Server) clientlistReceiver(sleeptime time.Duration) {
 	var (
-		cl  []map[string]string
-		err error
+		clientlist *clients
+		err        error
 	)
 
 	s.login()
@@ -94,7 +102,8 @@ func (s *Server) clientlistReceiver(sleeptime time.Duration) {
 	}
 
 	for !s.closed {
-		cl, err = s.ts3conn.ClientlistToMaps("")
+		clientlist = new(clients)
+		clientlist.cl, err = s.ts3conn.ClientlistToMaps("")
 		if err != nil {
 			s.log(err)
 			if ts3sqlib.PermissionError.Equals(err) {
@@ -104,8 +113,15 @@ func (s *Server) clientlistReceiver(sleeptime time.Duration) {
 				}
 			}
 		} else {
+			clientlist.n = 0
+			for _, c := range clientlist.cl {
+				if strings.Contains(c["client_type"], "0") {
+					clientlist.n++
+				}
+			}
+
 			s.clmutex.Lock()
-			s.clientlist = cl
+			s.clientlist = clientlist
 			s.clmutex.Unlock()
 		}
 
