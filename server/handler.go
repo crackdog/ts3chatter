@@ -25,7 +25,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Fprint(w, htmlHeader)
 		if n > 0 {
-			fmt.Fprint(w, "<h6>", n, " Clients are online:<h6>\r\n")
+			fmt.Fprint(w, "<h6>", n, " Clients are online:</h6>\r\n")
 
 			for _, client := range clients {
 				nick, ok := client["client_nickname"]
