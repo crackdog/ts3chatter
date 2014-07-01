@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	htmlHeader = "<html><head><title>fkarchery ts3</title></head><body>\r\n"
+	htmlHeader = "<!DOCTYPE html><html><head><title>fkarchery ts3</title></head><body>\r\n"
 	htmlFooter = "</body></html>\r\n"
 )
 
