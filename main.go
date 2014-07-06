@@ -19,6 +19,7 @@ func main() {
 		logger     *log.Logger
 		lname      string
 		lpw        string
+		nick       string
 	)
 
 	flag.BoolVar(&loggerFlag, "log", false, "enable stdout logger")
@@ -27,6 +28,7 @@ func main() {
 		"change the ts3 server query 'address:port'")
 	flag.StringVar(&lname, "login", "ts3chatter", "set ts3 server query login name")
 	flag.StringVar(&lpw, "pw", "********", "set ts3 server query password")
+	flag.StringVar(&nick, "nick", "ts3chatter", "set the nickname for the server query")
 
 	flag.Parse()
 
@@ -38,7 +40,7 @@ func main() {
 	//lname = "testlogin"
 	//lpw = "bwu7tzVh"
 
-	ts3, err := server.New(address, lname, lpw, 1, logger, 5)
+	ts3, err := server.New(address, lname, lpw, 1, logger, 5, nick)
 	if err != nil {
 		//fmt.Fprintln(os.Stderr, err)
 		log.Fatal(err)

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/crackdog/ts3sqlib"
 	"log"
-	"strings"
 	"sync"
 	"time"
 )
@@ -15,6 +14,7 @@ type Server struct {
 	clientlist    *clients
 	loginname     string
 	password      string
+	nickname      string
 	virtualserver int
 	logger        *log.Logger
 	handlermutex  *sync.Mutex
@@ -24,20 +24,21 @@ type Server struct {
 }
 
 type clients struct {
-	cl []map[string]string
+	cl []ts3sqlib.Client
 	n  int
 }
 
 func New(address, login, password string, virtualserver int,
-	logger *log.Logger, sleepseconds int) (s *Server, err error) {
+	logger *log.Logger, sleepseconds int, nick string) (s *Server, err error) {
 
 	s = new(Server)
 	s.loginname = login
 	s.password = password
+	s.nickname = nick
 	s.virtualserver = virtualserver
 	s.logger = logger
 	s.clientlist = new(clients)
-	s.clientlist.cl = make([]map[string]string, 0)
+	s.clientlist.cl = make([]ts3sqlib.Client, 0)
 	s.clientlist.n = 0
 	s.handlermutex = new(sync.Mutex)
 	s.clmutex = new(sync.Mutex)
@@ -68,6 +69,24 @@ func (s *Server) login() (err error) {
 	}
 
 	err = s.ts3conn.Login(s.loginname, s.password)
+	if err != nil {
+		return
+	}
+
+	//changing nickname...
+	pairs, err := s.ts3conn.SendToMap("whoami\n")
+	if err != nil {
+		return
+	}
+
+	clid, ok := pairs["client_id"]
+	if !ok {
+		err = fmt.Errorf("error at collecting client_id")
+		return
+	}
+
+	_, err = s.ts3conn.Send("clientupdate clid=" + clid + " client_nickname=" +
+		s.nickname + "\n")
 
 	return
 }
@@ -103,7 +122,7 @@ func (s *Server) clientlistReceiver(sleeptime time.Duration) {
 
 	for !s.closed {
 		clientlist = new(clients)
-		clientlist.cl, err = s.ts3conn.ClientlistToMaps("")
+		clientlist.cl, err = s.ts3conn.ClientlistToClients("") //Maps("")
 		if err != nil {
 			s.log(err)
 			if ts3sqlib.PermissionError.Equals(err) {
@@ -115,7 +134,7 @@ func (s *Server) clientlistReceiver(sleeptime time.Duration) {
 		} else {
 			clientlist.n = 0
 			for _, c := range clientlist.cl {
-				if strings.Contains(c["client_type"], "0") {
+				if c.ClientType == 0 {
 					clientlist.n++
 				}
 			}
