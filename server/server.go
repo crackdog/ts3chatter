@@ -9,39 +9,58 @@ import (
 	"time"
 )
 
+const (
+	tryN = 3
+)
+
 type Server struct {
 	ts3conn       *ts3sqlib.SqConn
-	clientlist    *clients
+	data          *serverData
+	address       string
 	loginname     string
 	password      string
 	nickname      string
 	virtualserver int
 	logger        *log.Logger
+	sleepseconds  int
 	handlermutex  *sync.Mutex
-	clmutex       *sync.Mutex
+	datamutex     *sync.Mutex
 	quit          chan bool
 	closed        bool
 }
 
-type clients struct {
-	cl []ts3sqlib.Client
-	n  int
+type serverData struct {
+	clientlist  []ts3sqlib.Client
+	n           int //Number of online clients.
+	channellist []channel
+}
+
+type channel struct {
+	name    string            `json:"channel_name"`
+	data    map[string]string `json:"-"`
+	clients []ts3sqlib.Client `json:"clients"`
 }
 
 func New(address, login, password string, virtualserver int,
 	logger *log.Logger, sleepseconds int, nick string) (s *Server, err error) {
 
 	s = new(Server)
+	s.address = address
 	s.loginname = login
 	s.password = password
 	s.nickname = nick
 	s.virtualserver = virtualserver
 	s.logger = logger
-	s.clientlist = new(clients)
-	s.clientlist.cl = make([]ts3sqlib.Client, 0)
-	s.clientlist.n = 0
+	//s.clientlist = new(clients)
+	//s.clientlist.cl = make([]ts3sqlib.Client, 0)
+	//s.clientlist.n = 0
+	s.data = new(serverData)
+	s.data.clientlist = make([]ts3sqlib.Client, 0)
+	s.data.channellist = make([]channel, 0)
+	s.data.n = 0
+	s.sleepseconds = sleepseconds
 	s.handlermutex = new(sync.Mutex)
-	s.clmutex = new(sync.Mutex)
+	s.datamutex = new(sync.Mutex)
 
 	s.quit = make(chan bool)
 	s.closed = false
@@ -52,7 +71,7 @@ func New(address, login, password string, virtualserver int,
 		return
 	}
 
-	go s.clientlistReceiver(time.Duration(sleepseconds) * time.Second)
+	go s.dataReceiver(time.Duration(s.sleepseconds) * time.Second)
 
 	return
 }
@@ -108,41 +127,101 @@ func (s *Server) log(v ...interface{}) {
 	}
 }
 
+func (s *Server) handleError(err error) {
+	switch {
+	case ts3sqlib.ClosedError.Equals(err):
+		_ = s.Quit()
+		s.closed = false
+		s.ts3conn, err = ts3sqlib.Dial(s.address, s.logger)
+		go s.dataReceiver(time.Duration(s.sleepseconds) * time.Second)
+	case ts3sqlib.PermissionError.Equals(err):
+		err = s.login()
+	default:
+		//nop
+	}
+
+	if err != nil {
+		s.log("handleError: ", err)
+	}
+}
+
 //clientlistReceiver receives a Clientlist every
-func (s *Server) clientlistReceiver(sleeptime time.Duration) {
+func (s *Server) dataReceiver(sleeptime time.Duration) {
 	var (
-		clientlist *clients
-		err        error
+		data *serverData
+		err  error
 	)
 
-	s.login()
+	err = s.login()
 	if err != nil {
 		s.log(err)
+		s.Quit()
+		return
 	}
 
 	for !s.closed {
-		clientlist = new(clients)
-		clientlist.cl, err = s.ts3conn.ClientlistToClients("") //Maps("")
+		//for n := 0; !s.closed && n < tryN; i++ {
+		err = nil
+		data = new(serverData)
+
+		data.clientlist, err = s.ts3conn.ClientlistToClients("")
+		if err != nil {
+			s.handleError(err)
+			continue
+		}
+
+		channelmaps, err := s.ts3conn.SendToMaps("channellist\n")
+		if err != nil {
+			s.handleError(err)
+			continue
+		}
+
+		data.channellist = make([]channel, len(channelmaps))
+		for i, c := range data.channellist {
+			c.data = channelmaps[i]
+			c.name = c.data["channel_name"]
+			c.clients = make([]ts3sqlib.Client, 0, 5) //maybe more or less than 5
+		}
+
+		for _, c := range data.clientlist {
+			if c.Cid >= 0 && c.Cid < len(data.channellist) { //maybe c.Cid -> uint
+				data.channellist[c.Cid].clients = append(data.channellist[c.Cid].clients, c)
+			}
+		}
+
+		s.datamutex.Lock()
+		s.data = data
+		s.datamutex.Unlock()
+
+		/*s.login()
 		if err != nil {
 			s.log(err)
-			if ts3sqlib.PermissionError.Equals(err) {
-				s.login()
-				if err != nil {
-					s.log(err)
-				}
-			}
-		} else {
-			clientlist.n = 0
-			for _, c := range clientlist.cl {
-				if c.ClientType == 0 {
-					clientlist.n++
-				}
-			}
-
-			s.clmutex.Lock()
-			s.clientlist = clientlist
-			s.clmutex.Unlock()
 		}
+
+		for !s.closed {
+			clientlist = new(clients)
+			clientlist.cl, err = s.ts3conn.ClientlistToClients("") //Maps("")
+			if err != nil {
+				s.log(err)
+				if ts3sqlib.PermissionError.Equals(err) {
+					s.login()
+					if err != nil {
+						s.log(err)
+					}
+				}
+			} else {
+				clientlist.n = 0
+				for _, c := range clientlist.cl {
+					if c.ClientType == 0 {
+						clientlist.n++
+					}
+				}
+
+				s.clmutex.Lock()
+				s.clientlist = clientlist
+				s.clmutex.Unlock()
+			}
+		}*/
 
 		time.Sleep(sleeptime)
 	}

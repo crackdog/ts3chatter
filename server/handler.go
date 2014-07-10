@@ -15,22 +15,35 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//s.handlermutex.Lock()
 	//defer s.handlermutex.Unlock()
 
-	if r.URL.Path == "/ts3/clientlist" {
-		m, err := json.MarshalIndent(s.clientlist.cl, "", "  ")
+	if r.URL.Path == "/ts3chatter/channellist" {
+		/*answer, err := s.ts3conn.Send("channellist\n")
 		if err != nil {
 			fmt.Fprintln(w, "Error: ", err)
-		} else {
-			fmt.Fprintln(w, string(m))
+			return
 		}
+
+		channelmaps, err := ts3sqlib.MsgToMaps(answer)
+		if err != nil {
+			fmt.Fprintln(w, "Error: ", err)
+			return
+		}
+
+		m, err := json.MarshalIndent(channelmaps, "", "  ")
+		if err != nil {
+			fmt.Fprintln(w, "Error: ", err)
+			return
+		}
+
+		fmt.Fprintln(w, string(m))*/
+		s.ServerChannellistJSON(w, r)
+	} else if r.URL.Path == "/ts3chatter/clientlist" {
+		s.ServerClientlistJSON(w, r)
 	} else {
-
-		//var i int
-
 		if !s.closed {
-			s.clmutex.Lock()
-			clients := s.clientlist.cl
-			n := s.clientlist.n
-			s.clmutex.Unlock()
+			s.datamutex.Lock()
+			clients := s.data.clientlist
+			n := s.data.n
+			s.datamutex.Unlock()
 
 			fmt.Fprint(w, htmlHeader)
 
@@ -75,4 +88,26 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	return
+}
+
+func (s *Server) ServerClientlistJSON(w http.ResponseWriter, r *http.Request) {
+	s.datamutex.Lock()
+	m, err := json.MarshalIndent(s.data.clientlist, "", "  ")
+	s.datamutex.Unlock()
+	if err != nil {
+		fmt.Fprintln(w, "Error: ", err)
+	} else {
+		fmt.Fprintln(w, string(m))
+	}
+}
+
+func (s *Server) ServerChannellistJSON(w http.ResponseWriter, r *http.Request) {
+	s.datamutex.Lock()
+	m, err := json.MarshalIndent(s.data.channellist, "", "  ")
+	s.datamutex.Unlock()
+	if err != nil {
+		fmt.Fprintln(w, "Error: ", err)
+	} else {
+		fmt.Fprintln(w, string(m))
+	}
 }
