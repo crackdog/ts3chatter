@@ -1,4 +1,4 @@
-//server contains the ts3chatter server.
+//Package server contains the ts3chatter server.
 package server
 
 import (
@@ -115,7 +115,7 @@ func (s *Server) Quit() (err error) {
 	if s.ts3conn != nil {
 		err = s.ts3conn.Quit()
 	} else {
-		err = fmt.Errorf("Quit: s.ts3conn nil error")
+		err = fmt.Errorf("quit: s.ts3conn nil error")
 	}
 	return
 }
