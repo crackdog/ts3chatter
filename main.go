@@ -36,13 +36,8 @@ func main() {
 		logger = ts3sqlib.StdoutLogger
 	}
 
-	//for my test configuration:
-	//lname = "testlogin"
-	//lpw = "bwu7tzVh"
-
 	ts3, err := server.New(address, lname, lpw, 1, logger, 5, nick)
 	if err != nil {
-		//fmt.Fprintln(os.Stderr, err)
 		log.Fatal(err)
 		return
 	}

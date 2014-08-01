@@ -7,15 +7,16 @@ import (
 	"strings"
 )
 
+//ServeHTTP serves a given http.Request.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case strings.Contains(r.URL.Path, "/ts3chatter/clientlist"):
 		s.datamutex.Lock()
-		s.ServeJSON(w, r, s.data.clientlist)
+		s.serveJSON(w, r, s.data.clientlist)
 		s.datamutex.Unlock()
 	case strings.Contains(r.URL.Path, "/ts3chatter/channellist"):
 		s.datamutex.Lock()
-		s.ServeJSON(w, r, s.data.channellist)
+		s.serveJSON(w, r, s.data.channellist)
 		s.datamutex.Unlock()
 	default:
 		http.Error(w, "404 not found", 404)
@@ -23,7 +24,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (s *Server) ServeJSON(w http.ResponseWriter, r *http.Request, v interface{}) {
+func (s *Server) serveJSON(w http.ResponseWriter, r *http.Request, v interface{}) {
 	m, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		http.Error(w, "internal server error", 500)

@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+//Server contains the ts3 sq connection and other ts3 server data.
 type Server struct {
 	ts3conn       *ts3sqlib.SqConn
 	data          *serverData
@@ -37,6 +38,7 @@ type channel struct {
 	Clients []ts3sqlib.Client `json:"clients"`
 }
 
+//New creates a new Server structure.
 func New(address, login, password string, virtualserver int,
 	logger *log.Logger, sleepseconds int, nick string) (s *Server, err error) {
 
@@ -106,6 +108,7 @@ func (s *Server) login() (err error) {
 	return
 }
 
+//Quit disconnects the ts3 sq connection of a Server.
 func (s *Server) Quit() (err error) {
 	s.closed = true
 	s.quit <- true
