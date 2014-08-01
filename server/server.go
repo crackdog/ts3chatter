@@ -9,10 +9,6 @@ import (
 	"time"
 )
 
-const (
-	tryN = 3
-)
-
 type Server struct {
 	ts3conn       *ts3sqlib.SqConn
 	data          *serverData
@@ -36,9 +32,9 @@ type serverData struct {
 }
 
 type channel struct {
-	name    string            `json:"channel_name"`
-	data    map[string]string `json:"-"`
-	clients []ts3sqlib.Client `json:"clients"`
+	Name    string            `json:"channel_name"`
+	Data    map[string]string `json:"-"`
+	Clients []ts3sqlib.Client `json:"clients"`
 }
 
 func New(address, login, password string, virtualserver int,
@@ -160,7 +156,6 @@ func (s *Server) dataReceiver(sleeptime time.Duration) {
 	}
 
 	for !s.closed {
-		//for n := 0; !s.closed && n < tryN; i++ {
 		err = nil
 		data = new(serverData)
 
@@ -177,51 +172,22 @@ func (s *Server) dataReceiver(sleeptime time.Duration) {
 		}
 
 		data.channellist = make([]channel, len(channelmaps))
-		for i, c := range data.channellist {
-			c.data = channelmaps[i]
-			c.name = c.data["channel_name"]
-			c.clients = make([]ts3sqlib.Client, 0, 5) //maybe more or less than 5
+		for i := range data.channellist {
+			data.channellist[i].Data = channelmaps[i]
+			data.channellist[i].Name = data.channellist[i].Data["channel_name"]
+			data.channellist[i].Clients = make([]ts3sqlib.Client, 0, 2) //maybe more or less than 5
 		}
 
 		for _, c := range data.clientlist {
-			if c.Cid >= 0 && c.Cid < len(data.channellist) { //maybe c.Cid -> uint
-				data.channellist[c.Cid].clients = append(data.channellist[c.Cid].clients, c)
+			channelIndex := c.Cid - 1
+			if channelIndex >= 0 && channelIndex < len(data.channellist) { //maybe c.Cid -> uint
+				data.channellist[channelIndex].Clients = append(data.channellist[channelIndex].Clients, c)
 			}
 		}
 
 		s.datamutex.Lock()
 		s.data = data
 		s.datamutex.Unlock()
-
-		/*s.login()
-		if err != nil {
-			s.log(err)
-		}
-
-		for !s.closed {
-			clientlist = new(clients)
-			clientlist.cl, err = s.ts3conn.ClientlistToClients("") //Maps("")
-			if err != nil {
-				s.log(err)
-				if ts3sqlib.PermissionError.Equals(err) {
-					s.login()
-					if err != nil {
-						s.log(err)
-					}
-				}
-			} else {
-				clientlist.n = 0
-				for _, c := range clientlist.cl {
-					if c.ClientType == 0 {
-						clientlist.n++
-					}
-				}
-
-				s.clmutex.Lock()
-				s.clientlist = clientlist
-				s.clmutex.Unlock()
-			}
-		}*/
 
 		time.Sleep(sleeptime)
 	}
