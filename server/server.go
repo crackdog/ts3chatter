@@ -132,7 +132,10 @@ func (s *Server) handleError(err error) {
 		_ = s.Quit()
 		s.closed = false
 		s.ts3conn, err = ts3sqlib.Dial(s.address, s.logger)
-		go s.dataReceiver(time.Duration(s.sleepseconds) * time.Second)
+		if err != nil {
+			err = s.login()
+		}
+		//go s.dataReceiver(time.Duration(s.sleepseconds) * time.Second)
 	case ts3sqlib.PermissionError.Equals(err):
 		err = s.login()
 	default:
