@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/crackdog/ts3sqlib"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -184,10 +185,15 @@ func (s *Server) dataReceiver(sleeptime time.Duration) {
 			data.channellist[i].Clients = make([]ts3sqlib.Client, 0, 2) //maybe more or less than 5
 		}
 
-		for _, c := range data.clientlist {
-			channelIndex := c.Cid - 1
-			if channelIndex >= 0 && channelIndex < len(data.channellist) { //maybe c.Cid -> uint
-				data.channellist[channelIndex].Clients = append(data.channellist[channelIndex].Clients, c)
+		for i := range data.channellist {
+			channelIndex, tmperr := strconv.Atoi(data.channellist[i].Data["cid"])
+			if tmperr != nil {
+				continue
+			}
+			for _, c := range data.clientlist {
+				if c.Cid == channelIndex {
+					data.channellist[i].Clients = append(data.channellist[i].Clients, c)
+				}
 			}
 		}
 
