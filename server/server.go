@@ -127,16 +127,36 @@ func (s *Server) log(v ...interface{}) {
 	}
 }
 
+func (s *Server) reconnect() (err error) {
+	if !s.ts3conn.IsClosed() {
+		_ = s.ts3conn.Quit()
+	}
+
+	for {
+
+		s.ts3conn, err = ts3sqlib.Dial(s.address, s.logger)
+		if err == nil {
+			err = s.login()
+		}
+
+		if err != nil {
+			time.Sleep(2 * time.Second)
+		} else {
+			break
+		}
+	}
+
+	if err != nil {
+		s.closed = false
+	}
+
+	return
+}
+
 func (s *Server) handleError(err error) {
 	switch {
 	case ts3sqlib.ClosedError.Equals(err):
-		_ = s.Quit()
-		s.closed = false
-		s.ts3conn, err = ts3sqlib.Dial(s.address, s.logger)
-		if err != nil {
-			err = s.login()
-		}
-		//go s.dataReceiver(time.Duration(s.sleepseconds) * time.Second)
+		err = s.reconnect()
 	case ts3sqlib.PermissionError.Equals(err):
 		err = s.login()
 	default:
@@ -182,7 +202,7 @@ func (s *Server) dataReceiver(sleeptime time.Duration) {
 		for i := range data.channellist {
 			data.channellist[i].Data = channelmaps[i]
 			data.channellist[i].Name = data.channellist[i].Data["channel_name"]
-			data.channellist[i].Clients = make([]ts3sqlib.Client, 0, 2) //maybe more or less than 5
+			data.channellist[i].Clients = make([]ts3sqlib.Client, 0, 2)
 		}
 
 		for i := range data.channellist {
