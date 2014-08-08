@@ -50,9 +50,6 @@ func New(address, login, password string, virtualserver int,
 	s.nickname = nick
 	s.virtualserver = virtualserver
 	s.logger = logger
-	//s.clientlist = new(clients)
-	//s.clientlist.cl = make([]ts3sqlib.Client, 0)
-	//s.clientlist.n = 0
 	s.data = new(serverData)
 	s.data.clientlist = make([]ts3sqlib.Client, 0)
 	s.data.channellist = make([]channel, 0)
@@ -168,7 +165,6 @@ func (s *Server) handleError(err error) {
 	}
 }
 
-//clientlistReceiver receives a Clientlist every
 func (s *Server) dataReceiver(sleeptime time.Duration) {
 	var (
 		data *serverData
@@ -177,9 +173,7 @@ func (s *Server) dataReceiver(sleeptime time.Duration) {
 
 	err = s.login()
 	if err != nil {
-		s.log(err)
-		s.Quit()
-		return
+		s.handleError(err)
 	}
 
 	for !s.closed {
