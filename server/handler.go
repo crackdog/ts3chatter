@@ -4,24 +4,37 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 //ServeHTTP serves a given http.Request.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch {
-	case strings.Contains(r.URL.Path, "/ts3chatter/clientlist"):
-		s.datamutex.Lock()
-		s.serveJSON(w, r, s.data.clientlist)
-		s.datamutex.Unlock()
-	case strings.Contains(r.URL.Path, "/ts3chatter/channellist"):
-		s.datamutex.Lock()
-		s.serveJSON(w, r, s.data.channellist)
-		s.datamutex.Unlock()
-	default:
+	s.servemux.ServeHTTP(w, r)
+}
+
+func (s *Server) NewServeMux() *http.ServeMux {
+	sm := http.NewServeMux()
+
+	//sm.HandleFunc("/ts3chatter/clientlist",
+
+	//sm.HandleFunc("/ts3chatter/channellist",
+
+	sm.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "404 not found", 404)
-	}
-	return
+	})
+
+	return sm
+}
+
+func (s *Server) GetChannellist() interface{} {
+	s.datamutex.Lock()
+	defer s.datamutex.Unlock()
+	return s.data.channellist
+}
+
+func (s *Server) GetClientlist() interface{} {
+	s.datamutex.Lock()
+	defer s.datamutex.Unlock()
+	return s.data.clientlist
 }
 
 func (s *Server) serveJSON(w http.ResponseWriter, r *http.Request, v interface{}) {

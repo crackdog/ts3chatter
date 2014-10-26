@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/crackdog/ts3sqlib"
 	"log"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ import (
 //Server contains the ts3 sq connection and other ts3 server data.
 type Server struct {
 	ts3conn       *ts3sqlib.SqConn
+	servemux      *http.ServeMux
 	data          *serverData
 	address       string
 	loginname     string
