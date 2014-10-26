@@ -14,27 +14,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) NewServeMux() *http.ServeMux {
 	sm := http.NewServeMux()
 
-	//sm.HandleFunc("/ts3chatter/clientlist",
+	sm.HandleFunc("/ts3chatter/clientlist", s.ServeClientlist)
 
-	//sm.HandleFunc("/ts3chatter/channellist",
+	sm.HandleFunc("/ts3chatter/channellist", s.ServeChannellist)
 
 	sm.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "404 not found", 404)
+		http.NotFound(w, r)
 	})
 
 	return sm
 }
 
-func (s *Server) GetChannellist() interface{} {
+func (s *Server) ServeChannellist(w http.ResponseWriter, r *http.Request) {
 	s.datamutex.Lock()
-	defer s.datamutex.Unlock()
-	return s.data.channellist
+	cl := s.data.channellist
+	s.datamutex.Unlock()
+
+	s.serveJSON(w, r, cl)
 }
 
-func (s *Server) GetClientlist() interface{} {
+func (s *Server) ServeClientlist(w http.ResponseWriter, r *http.Request) {
 	s.datamutex.Lock()
-	defer s.datamutex.Unlock()
-	return s.data.clientlist
+	cl := s.data.clientlist
+	s.datamutex.Unlock()
+
+	s.serveJSON(w, r, cl)
 }
 
 func (s *Server) serveJSON(w http.ResponseWriter, r *http.Request, v interface{}) {
