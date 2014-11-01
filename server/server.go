@@ -28,15 +28,9 @@ type Server struct {
 }
 
 type serverData struct {
-	clientlist  []ts3sqlib.Client
+	clientlist  ts3sqlib.Clientlist
 	n           int //Number of online clients.
-	channellist []channel
-}
-
-type channel struct {
-	Name    string            `json:"channel_name"`
-	Data    map[string]string `json:"-"`
-	Clients []ts3sqlib.Client `json:"clients"`
+	channellist ts3sqlib.Channellist
 }
 
 //New creates a new Server structure.
@@ -52,7 +46,7 @@ func New(address, login, password string, virtualserver int,
 	s.logger = logger
 	s.data = new(serverData)
 	s.data.clientlist = make([]ts3sqlib.Client, 0)
-	s.data.channellist = make([]channel, 0)
+	s.data.channellist = make([]ts3sqlib.Channel, 0)
 	s.data.n = 0
 	s.sleepseconds = sleepseconds
 	s.handlermutex = new(sync.Mutex)
@@ -192,7 +186,7 @@ func (s *Server) dataReceiver(sleeptime time.Duration) {
 			continue
 		}
 
-		data.channellist = make([]channel, len(channelmaps))
+		data.channellist = make([]ts3sqlib.Channel, len(channelmaps))
 		for i := range data.channellist {
 			data.channellist[i].Data = channelmaps[i]
 			data.channellist[i].Name = data.channellist[i].Data["channel_name"]
