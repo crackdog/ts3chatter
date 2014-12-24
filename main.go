@@ -39,7 +39,7 @@ func main() {
 		logger = ts3sqlib.StdoutLogger
 	}
 
-	ts3, err := server.New(address, lname, lpw, 1, logger, 5, nick)
+	ts3, err := server.New(address, lname, lpw, 1, logger, 5, nick, path)
 	if err != nil {
 		log.Fatal(err)
 		return

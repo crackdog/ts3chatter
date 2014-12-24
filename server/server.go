@@ -36,13 +36,14 @@ type serverData struct {
 
 //New creates a new Server structure.
 func New(address, login, password string, virtualserver int,
-	logger *log.Logger, sleepseconds int, nick string) (s *Server, err error) {
+	logger *log.Logger, sleepseconds int, nick string, path string) (s *Server, err error) {
 
 	s = new(Server)
 	s.address = address
 	s.loginname = login
 	s.password = password
 	s.nickname = nick
+    s.path = path
 	s.virtualserver = virtualserver
 	s.logger = logger
 	s.data = new(serverData)
