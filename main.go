@@ -20,6 +20,7 @@ func main() {
 		lname      string
 		lpw        string
 		nick       string
+		path       string
 	)
 
 	flag.BoolVar(&loggerFlag, "log", false, "enable stdout logger")
@@ -29,6 +30,8 @@ func main() {
 	flag.StringVar(&lname, "login", "ts3chatter", "set ts3 server query login name")
 	flag.StringVar(&lpw, "pw", "********", "set ts3 server query password")
 	flag.StringVar(&nick, "nick", "ts3chatter", "set the nickname for the server query")
+	flag.StringVar(&path, "path", "ts3chatter/",
+		"change the path for the client- and channellist")
 
 	flag.Parse()
 

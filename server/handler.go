@@ -10,11 +10,11 @@ import (
 //ServeHTTP serves a given http.Request.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
-	case strings.Contains(r.URL.Path, "/ts3chatter/clientlist"):
+	case strings.Contains(r.URL.Path, s.path+"clientlist"):
 		s.datamutex.Lock()
 		s.serveJSON(w, r, s.data.clientlist)
 		s.datamutex.Unlock()
-	case strings.Contains(r.URL.Path, "/ts3chatter/channellist"):
+	case strings.Contains(r.URL.Path, s.path+"channellist"):
 		s.datamutex.Lock()
 		s.serveJSON(w, r, s.data.channellist)
 		s.datamutex.Unlock()

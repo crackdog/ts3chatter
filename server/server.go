@@ -18,6 +18,7 @@ type Server struct {
 	loginname     string
 	password      string
 	nickname      string
+	path          string
 	virtualserver int
 	logger        *log.Logger
 	sleepseconds  int
