@@ -13,14 +13,15 @@ import (
 
 func main() {
 	var (
-		loggerFlag bool
-		fcgiport   string
-		address    string
-		logger     *log.Logger
-		lname      string
-		lpw        string
-		nick       string
-		path       string
+		loggerFlag   bool
+		fcgiport     string
+		address      string
+		logger       *log.Logger
+		lname        string
+		lpw          string
+		nick         string
+		path         string
+		sleepseconds int
 	)
 
 	flag.BoolVar(&loggerFlag, "log", false, "enable stdout logger")
@@ -32,6 +33,7 @@ func main() {
 	flag.StringVar(&nick, "nick", "ts3chatter", "set the nickname for the server query")
 	flag.StringVar(&path, "path", "ts3chatter/",
 		"change the path for the client- and channellist")
+	flag.IntVar(&sleepseconds, "period", 1, "time between data requests")
 
 	flag.Parse()
 
@@ -39,7 +41,8 @@ func main() {
 		logger = ts3sqlib.StdoutLogger
 	}
 
-	ts3, err := server.New(address, lname, lpw, 1, logger, 5, nick, path)
+	ts3, err := server.New(address, lname, lpw, 1, logger, sleepseconds, nick,
+		path)
 	if err != nil {
 		log.Fatal(err)
 		return
