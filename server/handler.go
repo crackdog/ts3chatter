@@ -26,11 +26,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) serveJSON(w http.ResponseWriter, r *http.Request, v interface{}) {
 	//m, err := json.MarshalIndent(v, "", "  ")
-	m, err := json.Marshal(v)
-	if err != nil {
-		http.Error(w, "internal server error", 500)
+	if !s.disconnected {
+		m, err := json.Marshal(v)
+		if err != nil {
+			http.Error(w, "internal server error", 500)
+		} else {
+			fmt.Fprintln(w, string(m))
+		}
 	} else {
-		fmt.Fprintln(w, string(m))
+		http.Error(w, "server offline", 500)
 	}
 	return
 }

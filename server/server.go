@@ -16,6 +16,7 @@ type Server struct {
 	data          *serverData
 	address       string
 	loginname     string
+	disconnected  bool
 	password      string
 	nickname      string
 	path          string
@@ -43,7 +44,7 @@ func New(address, login, password string, virtualserver int,
 	s.loginname = login
 	s.password = password
 	s.nickname = nick
-    s.path = path
+	s.path = path
 	s.virtualserver = virtualserver
 	s.logger = logger
 	s.data = new(serverData)
@@ -53,6 +54,8 @@ func New(address, login, password string, virtualserver int,
 	s.sleepseconds = sleepseconds
 	s.handlermutex = new(sync.Mutex)
 	s.datamutex = new(sync.Mutex)
+
+	s.disconnected = true
 
 	s.quit = make(chan bool)
 	s.closed = false
@@ -141,6 +144,7 @@ func (s *Server) reconnect() (err error) {
 
 	if err != nil {
 		s.closed = false
+		s.disconnected = false
 	}
 
 	return
@@ -149,6 +153,7 @@ func (s *Server) reconnect() (err error) {
 func (s *Server) handleError(err error) {
 	switch {
 	case ts3sqlib.ClosedError.Equals(err):
+		s.disconnected = true
 		err = s.reconnect()
 	case ts3sqlib.PermissionError.Equals(err):
 		err = s.login()
