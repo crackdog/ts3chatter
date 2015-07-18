@@ -102,6 +102,9 @@ func (s *Server) login() (err error) {
 	_, err = s.ts3conn.Send("clientupdate clid=" + clid + " client_nickname=" +
 		s.nickname + "\n")
 
+	s.disconnected = false
+	s.log("disconnected = false")
+
 	return
 }
 
@@ -145,6 +148,7 @@ func (s *Server) reconnect() (err error) {
 	if err != nil {
 		s.closed = false
 		s.disconnected = false
+		s.log("disconnected = false")
 	}
 
 	return
@@ -154,6 +158,7 @@ func (s *Server) handleError(err error) {
 	switch {
 	case ts3sqlib.ClosedError.Equals(err):
 		s.disconnected = true
+		s.log("disconnected reconnect")
 		err = s.reconnect()
 	case ts3sqlib.PermissionError.Equals(err):
 		err = s.login()
