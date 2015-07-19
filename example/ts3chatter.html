@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TS3Chatter</title>
+        <link rel="icon" type="image/png" href="https://fkarchery.de/fkarchery.png" />
+        <script>
+
+function channellist() {
+    channellist = '[{}]';
+    request = new XMLHttpRequest();
+    request.open('GET', '/ts3chatter/channellist', true);
+
+    request.onload = function() {
+        if(request.status >= 200 && request.status < 400) {
+            channellist = request.responseText;
+            //console.log(channellist); //debugging...
+            channellist = JSON.parse(channellist);
+
+            outputChannellist(channellist);
+        } else if(request.status == 500) {
+            console.log("Internal Server Error");
+            var clientN = document.getElementById('client_n');
+            clientN.appendChild(document.createTextNode("Server Offline or internal Server Error"));
+        } else {
+            console.log("Error " + request.status);
+        }
+    };
+
+    request.onerror = function() {
+        console.log("Connection Error");
+    }
+
+    request.send();
+}
+
+function outputChannellist(channellist) {
+    var listEl = document.getElementById('channel_list');
+    var clientN = document.getElementById('client_n');
+    var online_clients = 0;
+
+    for (var key in channellist) {
+        if(channellist[key].channel_name[0] != '[') {
+            var channel_clients = 0;
+            for (var x in channellist[key].clients) {
+                if (channellist[key].clients[x].client_type === 0) {
+                    online_clients++;
+                    channel_clients++;
+                }
+            }
+            if (channel_clients > 0) {
+                var listItemEl = document.createElement('li');
+
+                listItemEl.innerHTML = channellist[key].channel_name;
+                listEl.appendChild(listItemEl);
+
+                var listClient = document.createElement('ul');
+
+                for (var x in channellist[key].clients) {
+                    if (channellist[key].clients[x].client_type === 0) {
+                        var listClientEl = document.createElement('li');
+
+                        listClientEl.innerHTML = channellist[key].clients[x].client_nickname;
+                        listClient.appendChild(listClientEl);
+                    }
+                }
+
+                listEl.appendChild(listClient);
+            }
+        }
+    }
+    console.log(online_clients);
+    if (online_clients === 1) {
+        clientN.appendChild(document.createTextNode(online_clients + ' Client is online.'));
+    } else {
+        clientN.appendChild(document.createTextNode(online_clients + ' Clients are online.'));
+    }
+}
+
+document.addEventListener('DOMContentLoaded', channellist);
+
+        </script>
+    </head>
+    <body bgcolor=\"000000\"><font face=\"Monospace\" color=\"00FF00\">
+            <h2 id="client_n"></h2>
+            <ul id="client_list"></ul> 
+
+            <ul id="channel_list"></ul>
+    </body>
+</html>
