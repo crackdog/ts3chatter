@@ -158,7 +158,7 @@ func (s *Server) handleError(err error) {
 	switch {
 	case ts3sqlib.ClosedError.Equals(err):
 		s.disconnected = true
-		s.log("disconnected reconnect")
+		s.log("connection error, trying to reconnect")
 		err = s.reconnect()
 	case ts3sqlib.PermissionError.Equals(err):
 		err = s.login()
@@ -187,6 +187,12 @@ func (s *Server) dataReceiver(sleeptime time.Duration) {
 		data = new(serverData)
 
 		data.clientlist, err = s.ts3conn.ClientlistToClients("")
+		if err != nil {
+			s.handleError(err)
+			continue
+		}
+
+		data.clientlist, err = s.ts3conn.GetConnectionTimeForCL(data.clientlist)
 		if err != nil {
 			s.handleError(err)
 			continue
