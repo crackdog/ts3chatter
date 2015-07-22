@@ -17,7 +17,7 @@ function channellist() {
             channellist = JSON.parse(channellist);
 
             outputChannellist(channellist);
-        } else if(request.status == 500) {
+        } else if(request.status >= 500 && request.status < 600) {
             console.log("Internal Server Error");
             var clientN = document.getElementById('client_n');
             clientN.appendChild(document.createTextNode("Server Offline or internal Server Error"));
@@ -59,7 +59,9 @@ function outputChannellist(channellist) {
                     if (channellist[key].clients[x].client_type === 0) {
                         var listClientEl = document.createElement('li');
 
-                        listClientEl.innerHTML = channellist[key].clients[x].client_nickname;
+                        var str = channellist[key].clients[x].client_nickname;
+                        str += " (" + millisToTimeString(channellist[key].clients[x].connection_connected_time) + ")";
+                        listClientEl.innerHTML = str;
                         listClient.appendChild(listClientEl);
                     }
                 }
@@ -74,6 +76,16 @@ function outputChannellist(channellist) {
     } else {
         clientN.appendChild(document.createTextNode(online_clients + ' Clients are online.'));
     }
+}
+
+function millisToTimeString(millis) {
+    var s = Math.floor(millis / 1000);
+    var h = Math.floor(s / 3600);
+    s -= h * 3600;
+    var m = Math.floor(s / 60);
+    s -= m * 60;
+    var str = h + ":" + (m < 10 ? '0' : '') + m + ":" + (s < 10 ? '0' : '') + s;
+    return str;
 }
 
 document.addEventListener('DOMContentLoaded', channellist);
