@@ -38,3 +38,8 @@ func (s *Server) serveJSON(w http.ResponseWriter, r *http.Request, v interface{}
 	}
 	return
 }
+
+func (s *Server) serveTemplate(w http.ResponseWriter, r *http.Request) {
+	//TODO
+	http.Error(w, "not implemented", 501)
+}
