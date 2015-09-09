@@ -4,24 +4,41 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 //ServeHTTP serves a given http.Request.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch {
-	case strings.HasSuffix(r.URL.Path, s.path+"clientlist"):
-		s.datamutex.Lock()
-		s.serveJSON(w, r, s.data.clientlist)
-		s.datamutex.Unlock()
-	case strings.HasSuffix(r.URL.Path, s.path+"channellist"):
-		s.datamutex.Lock()
-		s.serveJSON(w, r, s.data.channellist)
-		s.datamutex.Unlock()
-	default:
-		http.Error(w, "404 not found", 404)
-	}
-	return
+	s.servemux.ServeHTTP(w, r)
+}
+
+func (s *Server) NewServeMux() *http.ServeMux {
+	sm := http.NewServeMux()
+
+	sm.HandleFunc("/ts3chatter/clientlist", s.ServeClientlist)
+
+	sm.HandleFunc("/ts3chatter/channellist", s.ServeChannellist)
+
+	sm.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+
+	return sm
+}
+
+func (s *Server) ServeChannellist(w http.ResponseWriter, r *http.Request) {
+	s.datamutex.Lock()
+	cl := s.data.channellist
+	s.datamutex.Unlock()
+
+	s.serveJSON(w, r, cl)
+}
+
+func (s *Server) ServeClientlist(w http.ResponseWriter, r *http.Request) {
+	s.datamutex.Lock()
+	cl := s.data.clientlist
+	s.datamutex.Unlock()
+
+	s.serveJSON(w, r, cl)
 }
 
 func (s *Server) serveJSON(w http.ResponseWriter, r *http.Request, v interface{}) {
