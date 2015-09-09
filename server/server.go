@@ -59,6 +59,7 @@ func New(address, login, password string, virtualserver int,
 	s.sleepseconds = sleepseconds
 	s.handlermutex = new(sync.Mutex)
 	s.datamutex = new(sync.Mutex)
+	s.servemux = s.NewServeMux()
 
 	s.quit = make(chan bool)
 	s.closed = false
